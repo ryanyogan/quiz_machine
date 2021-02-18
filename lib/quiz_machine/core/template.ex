@@ -10,4 +10,13 @@ defmodule QuizMachine.Core.Template do
   "A template generates questions."
   """
   defstruct ~w[name category instructions raw compiled generators checker]a
+
+  def new(template_fields) do
+    raw = Keyword.fetch!(template_fields, :raw)
+
+    struct!(
+      __MODULE__,
+      Keyword.put(template_fields, :compiled, EEx.compile_string(raw))
+    )
+  end
 end
