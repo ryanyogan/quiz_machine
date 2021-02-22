@@ -1,5 +1,3 @@
 defmodule QuizMachine do
-  @moduledoc """
-  Documentation for `QuizMachine`.
-  """
+  @moduledoc false
 end
