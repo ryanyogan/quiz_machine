@@ -2,12 +2,35 @@ defmodule QuizMachine.Boundary.QuizSession do
   alias QuizMachine.Core.{Quiz, Response}
   use GenServer
 
-  def select_question(session) do
-    GenServer.call(session, :select_question)
+  def select_question(name) do
+    GenServer.call(via(name), :select_question)
   end
 
-  def answer_question(session, answer) do
-    GenServer.call(session, {:answer_question, answer})
+  def answer_question(name, answer) do
+    GenServer.call(via(name), {:answer_question, answer})
+  end
+
+  def child_spec({quiz, email}) do
+    %{
+      id: {__MODULE__, {quiz.title, email}},
+      start: {__MODULE__, :start_link, [{quiz, email}]},
+      restart: :temporary
+    }
+  end
+
+  def start_link({quiz, email}) do
+    GenServer.start_link(
+      __MODULE__,
+      {quiz, email},
+      name: via({quiz.title, email})
+    )
+  end
+
+  def take_quiz(quiz, email) do
+    DynamicSupervisor.start_child(
+      QuizMachine.Supervisor.QuizSession,
+      {__MODULE__, {quiz, email}}
+    )
   end
 
   @impl true
@@ -36,6 +59,14 @@ defmodule QuizMachine.Boundary.QuizSession do
       :reply,
       {quiz.current_question.asked, quiz.last_response.correct_answer},
       {quiz, email}
+    }
+  end
+
+  def via({_title, _email} = name) do
+    {
+      :via,
+      Registry,
+      {QuizMachine.Registry.QuizSession, name}
     }
   end
 end

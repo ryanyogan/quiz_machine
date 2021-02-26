@@ -9,11 +9,6 @@ defmodule QuizMachine do
 
   alias QuizMachine.Core.Quiz
 
-  @spec start_quiz_manager :: :ignore | {:error, any} | {:ok, pid}
-  def start_quiz_manager do
-    GenServer.start_link(QuizManager, %{}, name: QuizManager)
-  end
-
   @spec build_quiz(any) :: any
   def build_quiz(fields) do
     with :ok <- QuizValidator.errors(fields),
@@ -33,20 +28,20 @@ defmodule QuizMachine do
   @spec take_quiz(any, any) :: any
   def take_quiz(title, email) do
     with %Quiz{} = quiz <- QuizManager.lookup_quiz_by_title(title),
-         {:ok, session} <- GenServer.start_link(QuizSession, {quiz, email}) do
-      session
+         {:ok, _} <- QuizSession.take_quiz(quiz, email) do
+      {title, email}
     else
       error -> error
     end
   end
 
-  @spec select_question(atom | pid | {atom, any} | {:via, atom, any}) :: any
+  @spec select_question({any, any}) :: any
   def select_question(session) do
-    GenServer.call(session, :select_question)
+    QuizSession.select_question(session)
   end
 
-  @spec answer_question(atom | pid | {atom, any} | {:via, atom, any}, any) :: any
+  @spec answer_question({any, any}, any) :: any
   def answer_question(session, answer) do
-    GenServer.call(session, {:answer_question, answer})
+    QuizSession.answer_question(session, answer)
   end
 end

@@ -4,6 +4,10 @@ defmodule QuizMachine.Boundary.QuizManager do
 
   @me __MODULE__
 
+  def start_link(options \\ []) do
+    GenServer.start_link(@me, %{}, options)
+  end
+
   def build_quiz(manager \\ @me, quiz_fields) do
     GenServer.call(manager, {:build_quiz, quiz_fields})
   end
