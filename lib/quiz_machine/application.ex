@@ -1,6 +1,6 @@
 defmodule QuizMachine.Application do
   @moduledoc false
-  alias QuizMachine.Boundary.QuizManager
+  alias QuizMachine.Boundary.{QuizManager, Proctor}
   use Application
 
   @impl true
@@ -10,6 +10,7 @@ defmodule QuizMachine.Application do
     children = [
       {QuizManager, [name: QuizManager]},
       {Registry, [name: QuizMachine.Registry.QuizSession, keys: :unique]},
+      {Proctor, [name: QuizMachine.Boundary.Proctor]},
       {DynamicSupervisor, [name: QuizMachine.Supervisor.QuizSession, strategy: :one_for_one]}
     ]
 

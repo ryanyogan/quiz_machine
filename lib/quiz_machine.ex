@@ -4,7 +4,8 @@ defmodule QuizMachine do
     QuizValidator,
     QuizSession,
     QuizManager,
-    TemplateValidator
+    TemplateValidator,
+    Proctor
   }
 
   alias QuizMachine.Core.Quiz
@@ -33,6 +34,15 @@ defmodule QuizMachine do
     else
       error -> error
     end
+  end
+
+  @spec schedule_quiz(any, any, any, any) :: any
+  def schedule_quiz(quiz, templates, start_at, end_at) do
+    with :ok <- QuizValidator.errors(quiz),
+         true <- Enum.all?(templates, &(:ok == TemplateValidator.errors(&1))),
+         :ok <- Proctor.schedule_quiz(quiz, templates, start_at, end_at),
+         do: :ok,
+         else: (error -> error)
   end
 
   @spec select_question({any, any}) :: any

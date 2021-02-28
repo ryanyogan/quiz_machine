@@ -33,6 +33,31 @@ defmodule QuizMachine.Boundary.QuizSession do
     )
   end
 
+  def active_sessions_for(quiz_title) do
+    QuizMachine.Supervisor.QuizSession
+    |> DynamicSupervisor.which_children()
+    |> Enum.filter(&child_pid?/1)
+    |> Enum.flat_map(&active_sessions(&1, quiz_title))
+  end
+
+  def end_sessions(names) do
+    Enum.each(names, fn name -> GenServer.stop(via(name)) end)
+  end
+
+  defp child_pid?({:undefined, pid, :worker, [__MODULE__]}) when is_pid(pid) do
+    true
+  end
+
+  defp child_pid?(_child), do: false
+
+  defp active_sessions({:undefined, pid, :worker, [__MODULE__]}, title) do
+    QuizMachine.Registry.QuizSession
+    |> Registry.keys(pid)
+    |> Enum.filter(fn {quiz_title, _email} ->
+      quiz_title == title
+    end)
+  end
+
   @impl true
   def init({quiz, email}) do
     {:ok, {quiz, email}}
